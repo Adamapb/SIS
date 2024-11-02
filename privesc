@@ -35,7 +35,7 @@ spawn ssh -o StrictHostKeyChecking=no cindy@$TARGET_IP
 expect "password:"
 send "D1r3ct0rIT\r"
 expect "\$ "
-send "cd /home/cindy/Documents && nohup python -m SimpleHTTPServer $counter >/dev/null 2>&1 &\r"
+send "cd /home/cindy/Documents && nohup python3 -m http.server $counter >/dev/null 2>&1 &\r"
 send "exit\r"
 expect eof
 EOF
