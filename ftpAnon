@@ -2,4 +2,4 @@
 wget --ftp-user=anonymous --ftp-password="" ftp://10.252.41.120/passfile
 
 
-#Complete except for making the IP passable
+#Complete except for making the IP passable and delivering to /home/ncraf/castleexploits
