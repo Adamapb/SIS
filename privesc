@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Define the counter directory
+COUNTER_DIR="/home/ncraf/castleexploits"
+
+# Check if "passfile" exists
+if [ ! -f "$COUNTER_DIR/passfile" ]; then
+    exit 0
+fi
+
+# Navigate to the counter directory
+cd "$COUNTER_DIR"
+
+# Check for a 5-digit numeric filename (60000-61000)
+counter=$(ls | grep -E '^[0-9]{5}$' | head -n 1)
+
+# If the counter file doesn't exist or doesn't match a 5-digit number, start at 60000
+if ! [[ $counter =~ ^[0-9]{5}$ ]]; then
+    counter=60000
+    touch $counter
+fi
+
+# SSH to the target system and start the Python HTTP server
+TARGET_IP="$1"
+
+if [ -z "$TARGET_IP" ]; then
+    echo "Usage: $0 <target_ip>"
+    exit 1
+fi
+
+# Use expect to automate SSH login and command execution
+expect << EOF
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no cindy@$TARGET_IP
+expect "password:"
+send "D1r3ct0rIT\r"
+expect "\$ "
+send "cd /home/cindy/Documents && nohup python -m SimpleHTTPServer $counter >/dev/null 2>&1 &\r"
+send "exit\r"
+expect eof
+EOF
+
+# Increment the counter
+newPort=$((counter + 1))
+
+# Update the counter file
+touch $newPort
+rm $counter
