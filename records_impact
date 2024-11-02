@@ -33,5 +33,14 @@ if [ "$port" -lt 60000 ] || [ "$port" -gt 61000 ]; then
 fi
 
 # Download the file and extract a random line without saving the file locally
-echo "One record retrieved:"
-wget -qO- "http://$TARGET_IP:$port/rosarioUsers.csv" | shuf -n 1
+# Capture the output of wget and check if it succeeded
+output=$(wget -qO- "http://$TARGET_IP:$port/rosarioUsers.csv")
+wget_exit_code=$?
+
+if [ $wget_exit_code -ne 0 ] || [ -z "$output" ]; then
+    echo "Error: Failed to retrieve rosarioUsers.csv from http://$TARGET_IP:$port/"
+    exit 1
+else
+    echo "One record retrieved:"
+    echo "$output" | shuf -n 1
+fi
