@@ -1,0 +1,2 @@
+#!/bin/bash
+wget --ftp-user=anonymous --ftp-password="" ftp://10.252.41.120/passfile
