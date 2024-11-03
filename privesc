@@ -23,9 +23,6 @@ set timeout -1
 spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /var/run/SNAPSHOTUPTIME"
 expect "password:"
 send "$PASSWORD\r"
-expect -re {\n} {
-    send_user "\n"
-}
 expect eof
 EOF
 )
@@ -34,8 +31,8 @@ EOF
 echo "Raw SNAPSHOT_UPTIME_OUTPUT:"
 echo "$SNAPSHOT_UPTIME_OUTPUT"
 
-# Clean up the output by trimming spaces and removing unwanted characters
-CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | sed -e 's/\r//g' | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//')
+# Extract only the lines that contain the numeric output and ignore the SSH session information
+CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | grep -Eo '^[0-9]+$' | tail -n1)
 
 # Debug: Output the cleaned content
 echo "Cleaned SNAPSHOT_UPTIME_OUTPUT:"
