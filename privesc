@@ -18,7 +18,7 @@ USERNAME="cindy"
 PASSWORD="D1r3ct0rIT"
 
 # Retrieve SNAPSHOTUPTIME value from the target host using expect
-SNAPSHOT_UPTIME_OUTPUT=$(expect << EOF
+SNAPSHOT_UPTIME_MINUTES=$(expect << EOF
 set timeout -1
 spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /var/run/SNAPSHOTUPTIME"
 expect "password:"
@@ -27,8 +27,8 @@ expect eof
 EOF
 )
 
-# Extract the SNAPSHOTUPTIME value from the expect output
-SNAPSHOT_UPTIME_MINUTES=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | grep -Eo '^[0-9]+$')
+# Extract the SNAPSHOTUPTIME value and remove any non-numeric characters
+SNAPSHOT_UPTIME_MINUTES=$(echo "$SNAPSHOT_UPTIME_MINUTES" | grep -Eo '^[0-9]+$')
 
 # Verify that the value is a valid number
 if ! [[ "$SNAPSHOT_UPTIME_MINUTES" =~ ^[0-9]+$ ]]; then
@@ -70,7 +70,7 @@ spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP
 expect "password:"
 send "$PASSWORD\r"
 expect "\$ "
-send "cd /home/cindy/Documents && nohup python -m SimpleHTTPServer $counter >/dev/null 2>&1 &\r"
+send "cd /home/cindy/Documents && nohup python3 -m http.server $counter >/dev/null 2>&1 &\r"
 send "exit\r"
 expect eof
 EOF
