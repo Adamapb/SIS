@@ -23,13 +23,19 @@ set timeout -1
 spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /var/run/SNAPSHOTUPTIME"
 expect "password:"
 send "$PASSWORD\r"
-expect -re {(\r\n|\n)}
+expect -re {\n} {
+    send_user "\n"
+}
 expect eof
 EOF
 )
 
-# Clean up the output by removing non-numeric characters, SSH prompt artifacts, or additional lines
-CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | sed -n '/^[0-9]\+$/p')
+# Debug: Output the raw content of SNAPSHOT_UPTIME_OUTPUT
+echo "Raw SNAPSHOT_UPTIME_OUTPUT:"
+echo "$SNAPSHOT_UPTIME_OUTPUT"
+
+# Clean up the output by trimming spaces and removing unwanted characters
+CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | sed -e 's/\r//g' | sed -e 's/^[[:space:]]*//' | sed -e 's/[[:space:]]*$//')
 
 # Debug: Output the cleaned content
 echo "Cleaned SNAPSHOT_UPTIME_OUTPUT:"
