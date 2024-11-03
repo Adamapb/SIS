@@ -24,7 +24,7 @@ fi
 
 # Block inbound and outbound traffic on those ports using UFW
 for port in $ports; do
-    sudo ufw deny in to any port "$port" proto tcp
-    sudo ufw deny out from any port "$port" proto tcp
-    echo "Blocked port $port"
+    sudo ufw insert 1 deny in to any port "$port" proto tcp
+    sudo ufw insert 1 deny out from any port "$port" proto tcp
+    echo "Blocked port $port at index value of 1"
 done
