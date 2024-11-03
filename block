@@ -1,32 +1,30 @@
 #!/bin/bash
 
-# Find PIDs of '*python3 -m http.server*' processes
-pids=$(pgrep -f '*python3 -m http.server*')
+# Find the PID of 'python3 -m http.server' using ps and grep
+pids=$(ps -ef | grep 'python3 -m http.server' | grep -v grep | awk '{print $2}')
+
 if [ -z "$pids" ]; then
     echo "No 'python3 -m http.server' processes found."
     exit 1
 fi
 
-#Convert PIDs into a comma-separated list
-pids_comma=$(echo "$pids" | paste -sd ',' -)
-
-#Find the ports these processes are listening on
-ports=$(lsof -Pan -p "$pids_comma" -i TCP -sTCP:LISTEN | awk 'NR>1 {print $9}' | sed 's/.*://')
+# Find the ports these processes are listening on
+ports=""
+for pid in $pids; do
+    port=$(lsof -Pan -p "$pid" -i TCP -sTCP:LISTEN | awk 'NR>1 {print $9}' | sed 's/.*://')
+    if [ -n "$port" ]; then
+        ports="$ports $port"
+    fi
+done
 
 if [ -z "$ports" ]; then
     echo "No listening ports found for 'python3 -m http.server' processes."
     exit 1
 fi
 
-#Enable FW
-UFW enable
-
-#Block inbound and outbound traffic on those ports using UFW
+# Block inbound and outbound traffic on those ports using UFW
 for port in $ports; do
     sudo ufw deny in to any port "$port" proto tcp
     sudo ufw deny out from any port "$port" proto tcp
     echo "Blocked port $port"
 done
-
-#Reload FW
-UFW reload
