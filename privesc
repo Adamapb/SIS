@@ -31,21 +31,24 @@ EOF
 echo "Raw SNAPSHOT_UPTIME_OUTPUT:"
 echo "$SNAPSHOT_UPTIME_OUTPUT"
 
-# Extract only the numeric lines and ignore everything else
+# Clean up the output by trimming spaces and removing non-numeric characters
 CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | sed -n 's/[^0-9]*\([0-9]\+\)[^0-9]*/\1/p')
 
-# Debug: Output the cleaned content
-echo "Cleaned SNAPSHOT_UPTIME_OUTPUT:"
-echo "$CLEANED_OUTPUT"
+# Extract only the last line (which should be the correct value)
+FINAL_OUTPUT=$(echo "$CLEANED_OUTPUT" | tail -n 1)
+
+# Debug: Output the final cleaned content
+echo "Final SNAPSHOT_UPTIME_OUTPUT:"
+echo "$FINAL_OUTPUT"
 
 # Verify that the value is a valid number
-if ! [[ "$CLEANED_OUTPUT" =~ ^[0-9]+$ ]]; then
+if ! [[ "$FINAL_OUTPUT" =~ ^[0-9]+$ ]]; then
     echo "Error: /var/run/SNAPSHOTUPTIME on the target host does not contain a valid number."
     exit 1
 fi
 
-# Assign the cleaned output to SNAPSHOT_UPTIME_MINUTES
-SNAPSHOT_UPTIME_MINUTES="$CLEANED_OUTPUT"
+# Assign the final output to SNAPSHOT_UPTIME_MINUTES
+SNAPSHOT_UPTIME_MINUTES="$FINAL_OUTPUT"
 
 # Convert snapshot uptime to seconds
 SNAPSHOT_UPTIME_SECONDS=$((SNAPSHOT_UPTIME_MINUTES * 60))
