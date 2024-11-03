@@ -34,7 +34,7 @@ fi
 
 # Download the file and extract a random line without saving the file locally
 # Capture the output of wget and check if it succeeded
-output=$(wget -qO- "http://$TARGET_IP:$port/rosarioUsers.csv")
+output=$(wget --timeout=10 --tries=1 -qO- "http://$TARGET_IP:$port/rosarioUsers.csv")
 wget_exit_code=$?
 
 if [ $wget_exit_code -ne 0 ] || [ -z "$output" ]; then
