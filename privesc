@@ -23,18 +23,26 @@ set timeout -1
 spawn ssh -o StrictHostKeyChecking=no $USERNAME@$TARGET_IP "cat /var/run/SNAPSHOTUPTIME"
 expect "password:"
 send "$PASSWORD\r"
+expect -re {(\r\n|\n)}
 expect eof
 EOF
 )
 
-# Clean up the output to remove any unexpected characters or spaces
-SNAPSHOT_UPTIME_MINUTES=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | tr -d '\r' | tr -d '\n' | grep -Eo '^[0-9]+$')
+# Clean up the output by removing non-numeric characters, SSH prompt artifacts, or additional lines
+CLEANED_OUTPUT=$(echo "$SNAPSHOT_UPTIME_OUTPUT" | sed -n '/^[0-9]\+$/p')
+
+# Debug: Output the cleaned content
+echo "Cleaned SNAPSHOT_UPTIME_OUTPUT:"
+echo "$CLEANED_OUTPUT"
 
 # Verify that the value is a valid number
-if ! [[ "$SNAPSHOT_UPTIME_MINUTES" =~ ^[0-9]+$ ]]; then
+if ! [[ "$CLEANED_OUTPUT" =~ ^[0-9]+$ ]]; then
     echo "Error: /var/run/SNAPSHOTUPTIME on the target host does not contain a valid number."
     exit 1
 fi
+
+# Assign the cleaned output to SNAPSHOT_UPTIME_MINUTES
+SNAPSHOT_UPTIME_MINUTES="$CLEANED_OUTPUT"
 
 # Convert snapshot uptime to seconds
 SNAPSHOT_UPTIME_SECONDS=$((SNAPSHOT_UPTIME_MINUTES * 60))
